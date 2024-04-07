@@ -1,5 +1,9 @@
+import asyncpg
+from urllib.parse import urlparse
 from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.requests import Request
+from fastapi.responses import RedirectResponse
 from dotenv import load_dotenv
 import os
 
@@ -7,75 +11,76 @@ load_dotenv()  # Carregar as variáveis de ambiente do arquivo .env
 
 app = FastAPI()
 
-# Acesse as variáveis de ambiente conforme necessário
-database_url = os.getenv("DATABASE_URL")
-database_url_unpooled = os.getenv("DATABASE_URL_UNPOOLED")
+# URL de conexão do PostgreSQL
+database_url = "postgres://neondb_owner:sua_senha@ep-lucky-dawn-a5687kqe-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
 
-# Rota para mostrar o URL do banco de dados
-@app.get("/database")
-async def get_database_url():
-    return {"database_url": database_url}
+# Parse o URL de conexão
+parsed_url = urlparse(database_url)
 
-# Rota para mostrar o URL do banco de dados não agrupado
-@app.get("/database_unpooled")
-async def get_unpooled_database_url():
-    return {"database_url_unpooled": database_url_unpooled}
+# Obter informações de conexão do URL
+host = parsed_url.hostname
+port = parsed_url.port
+user = parsed_url.username
+password = parsed_url.password
+database_name = parsed_url.path.lstrip('/')
+
+# Crie uma função para criar a tabela no PostgreSQL
+async def create_table():
+    conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
+    await conn.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    await conn.close()
+
+# Agora, você precisa chamar a função create_table para realmente criar a tabela
+create_table()
 
 # Rota para lidar com o formulário de registro de usuário
 @app.post("/registrar_usuario")
 async def register_user(username: str = Form(...), password: str = Form(...)):
-    # Aqui você pode adicionar a lógica para registrar o usuário no banco de dados
-    # Se ocorrer um erro durante o registro, você pode levantar uma exceção HTTPException
-    # Por exemplo:
-    # if erro_ocorreu:
-    #     raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
-    return {"username": username, "password": password}
+    try:
+        conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
+        await conn.execute("INSERT INTO usuarios (username, password) VALUES ($1, $2)", username, password)
+        await conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
+    return RedirectResponse("/usuarios.html")
 
 # Rota para mostrar a página de registro de usuário
 @app.get("/registro", response_class=HTMLResponse)
 async def show_registration_form():
-    # Aqui você pode retornar o conteúdo HTML da página de registro
-    # Por exemplo:
-    # return FileResponse("registro.html")
-    return "<html><body><h1>Página de Registro</h1><form method='post' action='/registrar_usuario'><input type='text' name='username' placeholder='Username'><br><input type='password' name='password' placeholder='Password'><br><button type='submit'>Registrar</button></form></body></html>"
-
-
-# Função para excluir um usuário do banco de dados
-async def delete_user(user_id: int):
-    try:
-        # Conectar ao banco de dados PostgreSQL
-        conn = await asyncpg.connect("postgresql://usuario:senha@localhost/nome_do_banco")
-
-        # Excluir o usuário da tabela pelo ID
-        await conn.execute("DELETE FROM usuarioss WHERE id = $1", user_id)
-
-        # Fechar a conexão com o banco de dados
-        await conn.close()
-
-        # Excluir o usuário do Supabase
-        await supabase.table('usuarioss').delete(where='id.eq.' + str(user_id))
-
-        return True
-
-    except Exception as e:
-        # Em caso de erro, imprimir uma mensagem de erro
-        print("Erro ao excluir o usuário:", e)
-        return False
+    return FileResponse("registro.html")
 
 # Rota para excluir um usuário
 @app.delete("/apagar_usuario/{user_id}")
 async def delete_usuario(user_id: int):
-    if await delete_user(user_id):
-        return RedirectResponse("/usuarios.html")
-    else:
+    try:
+        conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
+        await conn.execute("DELETE FROM usuarios WHERE id = $1", user_id)
+        await conn.close()
+    except Exception as e:
         raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
+    return RedirectResponse("/usuarios.html")
 
 # Rota para exibir os usuários
-# Rota para exibir a página de usuários
 @app.get("/usuarios.html", response_class=HTMLResponse)
 async def exibir_usuarios():
-    return FileResponse("usuarios.html")
+    try:
+        conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
+        users = await conn.fetch("SELECT * FROM usuarios")
+        await conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro ao buscar usuários.")
+    user_rows = ""
+    for user in users:
+        user_rows += f"<tr><td>{user['id']}</td><td>{user['username']}</td><td>{user['password']}</td><td><form method='post' action='/apagar_usuario/{user['id']}'><button type='submit'>Apagar</button></form></td></tr>"
+    return f"<html><body><h1>Usuários</h1><table border='1'><tr><th>ID</th><th>Username</th><th>Password</th><th>Ação</th></tr>{user_rows}</table></body></html>"
 
+# Rota para a página inicial
 @app.get("/", response_class=HTMLResponse)
 async def read_home(request: Request, mensagem: str = None):
     return FileResponse("index.html")
