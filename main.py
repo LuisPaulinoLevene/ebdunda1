@@ -94,6 +94,22 @@ async def exibir_usuarios():
         # Levantar uma exceção HTTP 500
         raise HTTPException(status_code=500, detail="Erro ao buscar os usuários. Por favor, tente novamente.")
 
+
+@app.get("/usuarios.html", response_class=HTMLResponse)
+async def exibir_usuarios():
+    try:
+        # Selecionar todos os usuários da tabela
+        usuarios = await supabase.table('usuarioss').select()
+
+        # Adicione logs para depuração
+        print("Usuários:", usuarios)
+
+        # Restante do código...
+    except Exception as e:
+        # Em caso de erro, imprimir uma mensagem de erro
+        print("Erro ao buscar os usuários:", e)
+        # Levantar uma exceção HTTP 500
+        raise HTTPException(status_code=500, detail="Erro ao buscar os usuários. Por favor, tente novamente.")
 # Rota para a página inicial
 @app.get("/", response_class=HTMLResponse)
 async def read_home(request: Request, mensagem: str = None):
