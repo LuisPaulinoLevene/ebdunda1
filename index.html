@@ -20,16 +20,19 @@
 
         nav {
             display: flex;
-            justify-content: flex-start;
+            flex-direction: column; /* Ajusta para empilhar verticalmente */
+            align-items: center; /* Alinha ao centro */
             background-color: #ddd;
             padding: 10px;
         }
 
         nav input {
             padding: 8px;
-            margin: 0 10px;
+            margin: 5px 0; /* Margem vertical para separação */
             border-radius: 5px;
             border: 1px solid #ccc;
+            width: 80%; /* Largura ajustada */
+            box-sizing: border-box; /* Garante que a largura inclui padding e borda */
         }
 
         nav button {
@@ -39,10 +42,19 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            width: 80%; /* Largura ajustada */
+            box-sizing: border-box; /* Garante que a largura inclui padding e borda */
         }
 
         nav button:hover {
             background-color: #555;
+        }
+
+        /* Media query para ajustar o layout em dispositivos móveis */
+        @media screen and (max-width: 600px) {
+            nav input, nav button {
+                width: 100%; /* Define a largura total */
+            }
         }
     </style>
 </head>
