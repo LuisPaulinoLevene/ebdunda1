@@ -77,6 +77,9 @@
 
         // Verificar se as credenciais são corretas
         if (username === 'maquina' && password === '111') {
+            // Limpar campos de entrada
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
             // Se as credenciais estiverem corretas, redirecionar para utilizadores.html
             window.location.href = '/utilizadores.html';
         } else {
