@@ -71,46 +71,11 @@ async def delete_usuario(user_id: int):
         raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
 
 # Rota para exibir os usuários
+# Rota para exibir a página de usuários
 @app.get("/usuarios.html", response_class=HTMLResponse)
 async def exibir_usuarios():
-    try:
-        # Selecionar todos os usuários da tabela
-        usuarios = await supabase.table('usuarioss').select()
+    return FileResponse("usuarios.html")
 
-        # Construir uma tabela HTML para exibir os usuários
-        table_content = "<h2>Usuários</h2>"
-        table_content += "<table border='1'><tr><th>ID</th><th>Username</th><th>Password</th><th>Ação</th></tr>"
-        for usuario in usuarios['data']:
-            table_content += f"<tr><td>{usuario['id']}</td><td>{usuario['username']}</td><td>{usuario['password']}</td>"
-            table_content += f"<td><form method='post' action='/apagar_usuario/{usuario['id']}'><button type='submit'>Apagar</button></form></td></tr>"
-        table_content += "</table>"
-
-        # Retornar a resposta HTML
-        return HTMLResponse(content=table_content)
-
-    except Exception as e:
-        # Em caso de erro, imprimir uma mensagem de erro
-        print("Erro ao buscar os usuários:", e)
-        # Levantar uma exceção HTTP 500
-        raise HTTPException(status_code=500, detail="Erro ao buscar os usuários. Por favor, tente novamente.")
-
-
-@app.get("/usuarios.html", response_class=HTMLResponse)
-async def exibir_usuarios():
-    try:
-        # Selecionar todos os usuários da tabela
-        usuarios = await supabase.table('usuarioss').select()
-
-        # Adicione logs para depuração
-        print("Usuários:", usuarios)
-
-        # Restante do código...
-    except Exception as e:
-        # Em caso de erro, imprimir uma mensagem de erro
-        print("Erro ao buscar os usuários:", e)
-        # Levantar uma exceção HTTP 500
-        raise HTTPException(status_code=500, detail="Erro ao buscar os usuários. Por favor, tente novamente.")
-# Rota para a página inicial
 @app.get("/", response_class=HTMLResponse)
 async def read_home(request: Request, mensagem: str = None):
     return FileResponse("index.html")
