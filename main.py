@@ -1,87 +1,63 @@
-import sqlite3
-from fastapi import FastAPI, Request, Form, HTTPException, Response
-from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from supabase_py import create_client
+from fastapi import FastAPI, Form, HTTPException
+from fastapi.responses import HTMLResponse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Carregar as variáveis de ambiente do arquivo .env
 
 app = FastAPI()
 
-# Função para criar todas as tabelas necessárias
-def create_usuarioss_table():
-    conn = sqlite3.connect("Maquina.db")
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarioss (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
+# Acesse as variáveis de ambiente conforme necessário
+database_url = os.getenv("DATABASE_URL")
+database_url_unpooled = os.getenv("DATABASE_URL_UNPOOLED")
 
-# Chamar a função para garantir que a tabela 'usuarioss' seja criada
-create_usuarioss_table()
+# Rota para mostrar o URL do banco de dados
+@app.get("/database")
+async def get_database_url():
+    return {"database_url": database_url}
 
-# Configurar o Supabase
-supabase_url = "https://ktsnyufwyiqtetkctbfk.supabase.co"
-supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0c255dWZ3eWlxdGV0a2N0YmZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0OTU5MTQsImV4cCI6MjAyODA3MTkxNH0.5a-L_BpattY7fbsq-iNHOboQr0mLopXLtDk9mubtypE"
-supabase = create_client(supabase_url, supabase_key)
+# Rota para mostrar o URL do banco de dados não agrupado
+@app.get("/database_unpooled")
+async def get_unpooled_database_url():
+    return {"database_url_unpooled": database_url_unpooled}
 
-# Rota para servir o arquivo HTML de registro
-@app.get("/registro", response_class=HTMLResponse)
-async def show_registration_form():
-    return FileResponse("usuarios.html")
-
-# Rota para processar o formulário de registro
+# Rota para lidar com o formulário de registro de usuário
 @app.post("/registrar_usuario")
 async def register_user(username: str = Form(...), password: str = Form(...)):
-    try:
-        # Conectar ao banco de dados SQLite
-        conn = sqlite3.connect("Maquina.db")
-        cursor = conn.cursor()
+    # Aqui você pode adicionar a lógica para registrar o usuário no banco de dados
+    # Se ocorrer um erro durante o registro, você pode levantar uma exceção HTTPException
+    # Por exemplo:
+    # if erro_ocorreu:
+    #     raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
+    return {"username": username, "password": password}
 
-        # Inserir os dados do usuário na tabela 'usuarioss'
-        cursor.execute(
-            "INSERT INTO usuarioss (username, password) VALUES (?, ?)",
-            (username, password)
-        )
-        conn.commit()
-        conn.close()
+# Rota para mostrar a página de registro de usuário
+@app.get("/registro", response_class=HTMLResponse)
+async def show_registration_form():
+    # Aqui você pode retornar o conteúdo HTML da página de registro
+    # Por exemplo:
+    # return FileResponse("registro.html")
+    return "<html><body><h1>Página de Registro</h1><form method='post' action='/registrar_usuario'><input type='text' name='username' placeholder='Username'><br><input type='password' name='password' placeholder='Password'><br><button type='submit'>Registrar</button></form></body></html>"
 
-        # Inserir os dados no Supabase
-        supabase.table('usuarioss').insert({"username": username, "password": password})
-
-        # Redirecionar para a página de sucesso (pode ser a mesma página de registro)
-        return RedirectResponse(url="/registro")
-
-    except Exception as e:
-        # Em caso de erro, imprimir uma mensagem de erro
-        print("Erro ao registrar usuário:", e)
-        # Retornar uma mensagem de erro ao cliente
-        raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
 
 # Função para excluir um usuário do banco de dados
-def delete_user(user_id: int):
+async def delete_user(user_id: int):
     try:
-        # Conectar ao banco de dados SQLite
-        conn = sqlite3.connect("Maquina.db")
-        cursor = conn.cursor()
+        # Conectar ao banco de dados PostgreSQL
+        conn = await asyncpg.connect("postgresql://usuario:senha@localhost/nome_do_banco")
 
         # Excluir o usuário da tabela pelo ID
-        cursor.execute("DELETE FROM usuarioss WHERE id = ?", (user_id,))
-        conn.commit()
+        await conn.execute("DELETE FROM usuarioss WHERE id = $1", user_id)
 
         # Fechar a conexão com o banco de dados
-        conn.close()
+        await conn.close()
 
         # Excluir o usuário do Supabase
-        supabase.table('usuarioss').delete(where='id.eq.' + str(user_id))
+        await supabase.table('usuarioss').delete(where='id.eq.' + str(user_id))
 
         return True
 
-    except sqlite3.Error as e:
+    except Exception as e:
         # Em caso de erro, imprimir uma mensagem de erro
         print("Erro ao excluir o usuário:", e)
         return False
@@ -89,7 +65,7 @@ def delete_user(user_id: int):
 # Rota para excluir um usuário
 @app.delete("/apagar_usuario/{user_id}")
 async def delete_usuario(user_id: int):
-    if delete_user(user_id):
+    if await delete_user(user_id):
         return RedirectResponse("/usuarios.html")
     else:
         raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
@@ -97,30 +73,22 @@ async def delete_usuario(user_id: int):
 # Rota para exibir os usuários
 @app.get("/usuarios.html", response_class=HTMLResponse)
 async def exibir_usuarios():
-    # Conectar ao banco de dados SQLite
-    conn = sqlite3.connect("Maquina.db")
-    cursor = conn.cursor()
-
     try:
         # Selecionar todos os usuários da tabela
-        cursor.execute("SELECT * FROM usuarioss")
-        usuarios = cursor.fetchall()
-
-        # Fechar a conexão com o banco de dados
-        conn.close()
+        usuarios = await supabase.table('usuarioss').select()
 
         # Construir uma tabela HTML para exibir os usuários
         table_content = "<h2>Usuários</h2>"
         table_content += "<table border='1'><tr><th>ID</th><th>Username</th><th>Password</th><th>Ação</th></tr>"
-        for usuario in usuarios:
-            table_content += f"<tr><td>{usuario[0]}</td><td>{usuario[1]}</td><td>{usuario[2]}</td>"
-            table_content += f"<td><form method='post' action='/apagar_usuario/{usuario[0]}'><button type='submit'>Apagar</button></form></td></tr>"
+        for usuario in usuarios['data']:
+            table_content += f"<tr><td>{usuario['id']}</td><td>{usuario['username']}</td><td>{usuario['password']}</td>"
+            table_content += f"<td><form method='post' action='/apagar_usuario/{usuario['id']}'><button type='submit'>Apagar</button></form></td></tr>"
         table_content += "</table>"
 
         # Retornar a resposta HTML
         return HTMLResponse(content=table_content)
 
-    except sqlite3.Error as e:
+    except Exception as e:
         # Em caso de erro, imprimir uma mensagem de erro
         print("Erro ao buscar os usuários:", e)
         # Levantar uma exceção HTTP 500
