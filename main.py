@@ -9,17 +9,17 @@ load_dotenv()  # Carregar as variáveis de ambiente do arquivo .env
 app = FastAPI()
 
 # URL de conexão do PostgreSQL
-database_url = "postgres://default:************@ep-rough-dawn-a411n5kq.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
+psql = "postgres://default:u0RMlhPAfkc3@ep-rough-dawn-a411n5kq.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
 
 # Parse o URL de conexão
-parsed_url = urlparse(database_url)
+psql = urlparse(database_url)
 
 # Obter informações de conexão do URL
-host = parsed_url.hostname
-port = parsed_url.port
-user = parsed_url.username
-password = parsed_url.password
-database_name = parsed_url.path.lstrip('/')
+host = psql.host
+port = psql.port
+user = psql.username
+password = psql.password
+database_name = psql.path.lstrip('/')
 
 # Rota para exibir a página de usuários
 @app.get("/usuarios.html")
