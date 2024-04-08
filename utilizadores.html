@@ -9,11 +9,11 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            text-align: center; /* Centraliza o conteúdo na página */
+            text-align: center;
         }
 
         h2 {
-            margin-top: 50px; /* Adiciona um espaço superior para melhorar a aparência */
+            margin-top: 50px;
         }
 
         form {
@@ -63,32 +63,12 @@
         nav button {
             margin-right: 20px;
         }
-
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
     </style>
     <script>
         function registrarUsuario() {
             var username = document.getElementById("username").value;
             var password = document.getElementById("password").value;
 
-            // Envia os dados do formulário para o servidor
             fetch('/registrar_usuario', {
                 method: 'POST',
                 headers: {
@@ -98,7 +78,6 @@
             })
             .then(response => {
                 if (response.ok) {
-                    // Redireciona para outra página ou executa outra ação conforme necessário
                     window.location.href = "/utilizadores.html";
                 } else {
                     console.error('Erro ao registrar usuário');
@@ -108,7 +87,6 @@
                 console.error('Erro ao realizar a requisição POST:', error);
             });
 
-            // Limpa os campos do formulário após o registro
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
         }
