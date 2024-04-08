@@ -9,11 +9,11 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            text-align: center; /* Centraliza o conteúdo na página */
+            text-align: center;
         }
 
         h2 {
-            margin-top: 50px; /* Adiciona um espaço superior para melhorar a aparência */
+            margin-top: 50px;
         }
 
         table {
@@ -62,18 +62,18 @@
             <tr>
                 <th>ID</th>
                 <th>Nome de Usuário</th>
-                <th>Senha</th> <!-- Adiciona a coluna de senhas -->
-                <th>Ação</th> <!-- Adiciona a coluna de ação -->
+                <th>Senha</th>
+                <th>Ação</th>
             </tr>
         </thead>
         <tbody>
             {% for usuario in usuarios %}
                 <tr>
-                    <td>{{ usuario[0] }}</td>
-                    <td>{{ usuario[1] }}</td>
-                    <td>{{ usuario[2] }}</td> <!-- Adiciona a coluna de senhas -->
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.username }}</td>
+                    <td>{{ usuario.password }}</td>
                     <td class="acao">
-                        <button onclick="apagarUsuario({{ usuario[0] }})">Apagar</button> <!-- Adiciona o botão de apagar -->
+                        <button onclick="apagarUsuario({{ usuario.id }})">Apagar</button>
                     </td>
                 </tr>
             {% endfor %}
@@ -85,12 +85,10 @@
 
 <script>
     function apagarUsuario(idUsuario) {
-        // Faz uma requisição DELETE ao backend para apagar o usuário
         fetch(`/apagar_usuario/${idUsuario}`, {
             method: 'DELETE'
         }).then(response => {
             if (response.ok) {
-                // Atualiza a página ou realiza outra ação conforme necessário
                 window.location.reload();
             } else {
                 console.error('Erro ao apagar o usuário');
