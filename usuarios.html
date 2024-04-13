@@ -73,7 +73,7 @@
                     <td>{{ usuario.username }}</td>
                     <td>{{ usuario.password }}</td>
                     <td class="acao">
-                        <button onclick="apagarUsuario({{ usuario.id }})">Apagar</button>
+                        <button onclick="apagarUsuario('{{ usuario.id }}')">Apagar</button>
                     </td>
                 </tr>
             {% endfor %}
@@ -84,18 +84,19 @@
 {% endif %}
 
 <script>
-    function apagarUsuario(idUsuario) {
-        fetch(`/apagar_usuario/${idUsuario}`, {
-            method: 'DELETE'
-        }).then(response => {
+    async function apagarUsuario(idUsuario) {
+        try {
+            const response = await fetch(`/apagar_usuario/${idUsuario}`, {
+                method: 'DELETE'
+            });
             if (response.ok) {
                 window.location.reload();
             } else {
                 console.error('Erro ao apagar o usuário');
             }
-        }).catch(error => {
+        } catch (error) {
             console.error('Erro ao realizar a requisição DELETE:', error);
-        });
+        }
     }
 </script>
 
