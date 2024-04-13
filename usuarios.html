@@ -56,34 +56,47 @@
 
 <h2>Lista de Usuários</h2>
 
-{% if usuarios %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome de Usuário</th>
-                <th>Senha</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for usuario in usuarios %}
-                <tr>
-                    <td>{{ usuario.id }}</td>
-                    <td>{{ usuario.username }}</td>
-                    <td>{{ usuario.password }}</td>
-                    <td class="acao">
-                        <button onclick="apagarUsuario('{{ usuario.id }}')">Apagar</button>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>Nenhum usuário cadastrado.</p>
-{% endif %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome de Usuário</th>
+            <th>Senha</th>
+            <th>Ação</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Aqui será adicionado dinamicamente os usuários via JavaScript -->
+    </tbody>
+</table>
 
 <script>
+    window.onload = async function () {
+        try {
+            const response = await fetch('/usuarios');
+            if (response.ok) {
+                const usuarios = await response.json();
+                const tbody = document.querySelector('tbody');
+                usuarios.forEach(usuario => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${usuario.id}</td>
+                        <td>${usuario.username}</td>
+                        <td>${usuario.password}</td>
+                        <td class="acao">
+                            <button onclick="apagarUsuario('${usuario.id}')">Apagar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                console.error('Erro ao obter usuários');
+            }
+        } catch (error) {
+            console.error('Erro ao realizar a requisição GET:', error);
+        }
+    }
+
     async function apagarUsuario(idUsuario) {
         try {
             const response = await fetch(`/apagar_usuario/${idUsuario}`, {
