@@ -94,12 +94,23 @@
     async function registrarUsuario(event) {
         event.preventDefault(); // Evita o envio do formulário por padrão
 
-        const formData = new FormData(document.getElementById("registrationForm")); // Obtém os dados do formulário
+        // Obtém os dados do formulário
+        const formData = new FormData(document.getElementById("registrationForm"));
+
+        // Converte os dados do formulário para um objeto JSON
+        const jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
 
         try {
+            // Envia os dados para o Supabase em formato JSON
             const response = await fetch('/registrar_usuario', {
                 method: 'POST',
-                body: formData // Envie os dados do formulário diretamente
+                headers: {
+                    'Content-Type': 'application/json' // Indica que o corpo da requisição está em JSON
+                },
+                body: JSON.stringify(jsonData) // Converte o objeto JSON em uma string JSON
             });
 
             if (response.ok) {
