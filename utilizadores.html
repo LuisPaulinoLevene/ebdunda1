@@ -5,45 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formulário de Registro</title>
     <style>
-        /* Estilos CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background-color: #333;
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 150px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button[type="submit"] {
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #555;
+        }
     </style>
-    <script>
-        function registrarUsuario() {
-            // Obter os valores dos campos do formulário
-            var username = document.getElementById("username").value;
-            var password = document.getElementById("password").value;
-
-            // Enviar os dados para o backend
-            fetch('/registrar_usuario', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', // Definir o tipo de conteúdo como JSON
-                },
-                body: JSON.stringify({ // Converter os dados em JSON
-                    username: username,
-                    password: password
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    window.location.href = "/usuarios.html"; // Redirecionar após o registro bem-sucedido
-                } else {
-                    console.error('Erro ao registrar usuário');
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao realizar a requisição POST:', error);
-            });
-
-            // Limpar os campos do formulário
-            document.getElementById("username").value = "";
-            document.getElementById("password").value = "";
-        }
-
-        function verUsuarios() {
-            window.location.href = "/usuarios.html";
-        }
-    </script>
 </head>
 <body>
 
@@ -53,15 +80,46 @@
 
 <h2>Formulário de Registro</h2>
 
-<form>
+<form id="registrationForm" onsubmit="registrarUsuario(event)">
     <label for="username">Nome de Usuário:</label>
     <input type="text" id="username" name="username" required>
 
     <label for="password">Senha:</label>
     <input type="password" id="password" name="password" required>
 
-    <button type="button" onclick="registrarUsuario()">Registrar</button>
+    <button type="submit">Registrar</button>
 </form>
+
+<script>
+    async function registrarUsuario(event) {
+        event.preventDefault(); // Evita o envio do formulário por padrão
+
+        const formData = new FormData(document.getElementById("registrationForm")); // Obtém os dados do formulário
+
+        try {
+            const response = await fetch('/registrar_usuario', {
+                method: 'POST',
+                body: formData // Envie os dados do formulário diretamente
+            });
+
+            if (response.ok) {
+                window.location.href = "/usuarios.html"; // Redireciona após o registro bem-sucedido
+            } else {
+                console.error('Erro ao registrar usuário');
+            }
+        } catch (error) {
+            console.error('Erro ao realizar a requisição POST:', error);
+        }
+
+        // Limpa os campos do formulário após o envio
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+    }
+
+    function verUsuarios() {
+        window.location.href = "/usuarios.html";
+    }
+</script>
 
 </body>
 </html>
