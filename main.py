@@ -27,7 +27,7 @@ async def register_user(username: str = Form(...), password: str = Form(...)):
     except Exception as e:
         logger.error(f"Erro ao registrar usuário: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
-    return RedirectResponse("/usuarios.html")
+    return RedirectResponse("/utilizadores.html")
 
 # Rota para listar os usuários cadastrados
 @app.get("/usuarios")
