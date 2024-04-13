@@ -1,53 +1,28 @@
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from dotenv import load_dotenv
-import asyncpg
-from urllib.parse import urlparse
+import os
+from supabase import create_client
 
-load_dotenv()  # Carregar as variáveis de ambiente do arquivo .env
+load_dotenv()
+
+# Obter as variáveis de ambiente do arquivo .env
+DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_KEY = os.getenv("DATABASE_KEY")
+
+# Criar o cliente Supabase
+supabase = create_client(DATABASE_URL, DATABASE_KEY)
 
 app = FastAPI()
 
-# URL de conexão do PostgreSQL
-psql = "postgres://default:u0RMlhPAfkc3@ep-rough-dawn-a411n5kq.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
-
-# Parse o URL de conexão
-psql = urlparse(database_url)
-
-# Obter informações de conexão do URL
-host = psql.host
-port = psql.port
-user = psql.username
-password = psql.password
-database_name = psql.path.lstrip('/')
-
-# Rota para exibir a página de usuários
-@app.get("/usuarios.html")
-async def show_users_page():
-    return FileResponse("usuarios.html")
-
-# Função para criar a tabela no PostgreSQL
-async def create_table():
-    conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
-    await conn.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id SERIAL PRIMARY KEY,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL
-        )
-    ''')
-    await conn.close()
-
-# Agora, chame a função create_table para criar a tabela
-create_table()
-
-# Rota para lidar com o formulário de registro de usuário
+# Rota para registrar um usuário
 @app.post("/registrar_usuario")
 async def register_user(username: str = Form(...), password: str = Form(...)):
     try:
-        conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
-        await conn.execute("INSERT INTO usuarios (username, password) VALUES ($1, $2)", username, password)
-        await conn.close()
+        # Inserir usuário no banco de dados Supabase
+        data = await supabase.table("usuarios").insert({"username": username, "password": password})
+        if data["error"]:
+            raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     return RedirectResponse("/usuarios.html")
@@ -61,9 +36,10 @@ async def show_registration_form():
 @app.delete("/apagar_usuario/{user_id}")
 async def delete_usuario(user_id: int):
     try:
-        conn = await asyncpg.connect(user=user, password=password, host=host, port=port, database=database_name)
-        await conn.execute("DELETE FROM usuarios WHERE id = $1", user_id)
-        await conn.close()
+        # Excluir usuário do banco de dados Supabase
+        data = await supabase.table("usuarios").delete().eq("id", user_id)
+        if data["error"]:
+            raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
     return RedirectResponse("/usuarios.html")
