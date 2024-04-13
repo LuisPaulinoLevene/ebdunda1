@@ -12,6 +12,7 @@ DATABASE_KEY = os.getenv("DATABASE_KEY")
 
 # Criar o cliente Supabase
 supabase = create_client(DATABASE_URL, DATABASE_KEY)
+import logging
 
 app = FastAPI()
 
@@ -19,11 +20,15 @@ app = FastAPI()
 @app.post("/registrar_usuario")
 async def register_user(username: str = Form(...), password: str = Form(...)):
     try:
+        # Adicione logs para depuração
+        logger.info(f"Tentativa de registro de usuário: {username}")
+
         # Inserir usuário no banco de dados Supabase
         data = await supabase.table("usuarios").insert({"username": username, "password": password})
         if data["error"]:
             raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     except Exception as e:
+        logger.error(f"Erro ao registrar usuário: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     return RedirectResponse("/usuarios.html")
 
