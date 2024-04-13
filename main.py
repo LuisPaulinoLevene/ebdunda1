@@ -7,7 +7,7 @@ from supabase import create_client
 load_dotenv()
 
 # Obter as variáveis de ambiente do arquivo .env
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "https://aazeusxcozadmuqqeksz.supabase.co"
 DATABASE_KEY = os.getenv("DATABASE_KEY")
 
 # Criar o cliente Supabase
