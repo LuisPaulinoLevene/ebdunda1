@@ -20,22 +20,28 @@ app = FastAPI()
 @app.post("/registrar_usuario")
 async def register_user(username: str = Form(...), password: str = Form(...)):
     try:
-        # Adicione logs para depuração
-        logger.info(f"Tentativa de registro de usuário: {username}")
-
         # Inserir usuário no banco de dados Supabase
         data = await supabase.table("usuarios").insert({"username": username, "password": password})
-        if data["error"]:
+        if data["error"] is not None:
             raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     except Exception as e:
         logger.error(f"Erro ao registrar usuário: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao registrar usuário. Por favor, tente novamente.")
     return RedirectResponse("/usuarios.html")
 
-# Rota para mostrar a página de registro de usuário
-@app.get("/registro")
-async def show_registration_form():
-    return FileResponse("registro.html")
+# Rota para listar os usuários cadastrados
+@app.get("/usuarios")
+async def listar_usuarios():
+    try:
+        # Consultar os usuários no banco de dados Supabase
+        response = await supabase.table("usuarios").select("*").execute()
+        if response["error"]:
+            raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
+
+        # Retornar os usuários como uma resposta JSON
+        return response["data"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
 
 # Rota para excluir um usuário
 @app.delete("/apagar_usuario/{user_id}")
