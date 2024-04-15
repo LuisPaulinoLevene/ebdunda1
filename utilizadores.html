@@ -104,8 +104,8 @@
         });
 
         try {
-            // Envia os dados para o Supabase em formato JSON
-            const response = await fetch('/registrar_usuario', {
+            // Envia os dados para o endpoint '/inserir_usuario' em formato JSON
+            const response = await fetch('/inserir_usuario', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json' // Indica que o corpo da requisição está em JSON
@@ -128,7 +128,7 @@
     }
 
     function verUsuarios() {
-        window.location.href = "/usuarios.html";
+        window.location.href = "/usuarios";
     }
 </script>
 
