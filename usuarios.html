@@ -3,112 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Usuários</title>
+    <title>Formulário de Registro</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+        }
+
+        nav {
+            background-color: #333;
+            padding: 10px;
             text-align: center;
+        }
+
+        nav button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 150px;
+            margin-bottom: 10px;
         }
 
         h2 {
-            margin-top: 50px;
-        }
-
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .acao {
             text-align: center;
+            margin-top: 20px;
         }
 
-        .acao button {
-            background-color: #f44336;
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button[type="submit"] {
+            background-color: #333;
             color: white;
             border: none;
-            padding: 5px 10px;
+            border-radius: 5px;
+            padding: 10px 20px;
             cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .acao button:hover {
-            background-color: #ff6961;
+        button[type="submit"]:hover {
+            background-color: #555;
         }
     </style>
 </head>
 <body>
 
-<h2>Lista de Usuários</h2>
+<nav>
+    <button onclick="verUsuarios()">Ver Usuários</button>
+</nav>
 
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome de Usuário</th>
-            <th>Senha</th>
-            <th>Ação</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Aqui serão adicionados dinamicamente os usuários via JavaScript -->
-    </tbody>
-</table>
+<h2>Formulário de Registro</h2>
+
+<form id="registrationForm" onsubmit="registrarUsuario(event)">
+    <label for="username">Nome de Usuário:</label>
+    <input type="text" id="username" name="username" required>
+
+    <label for="password">Senha:</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit">Registrar</button>
+</form>
 
 <script>
-    window.onload = async function () {
+    async function registrarUsuario(event) {
+        event.preventDefault(); // Evita o envio do formulário por padrão
+
+        // Obtém os dados do formulário
+        const formData = new FormData(document.getElementById("registrationForm"));
+
+        // Converte os dados do formulário para um objeto JSON
+        const jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
         try {
+            // Envia os dados para o endpoint '/inserir_usuario' em formato JSON
+            const response = await fetch('/inserir_usuario', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Indica que o corpo da requisição está em JSON
+                },
+                body: JSON.stringify(jsonData) // Converte o objeto JSON em uma string JSON
+            });
+
+            if (response.ok) {
+                window.location.href = "/usuarios.html"; // Redireciona após o registro bem-sucedido
+            } else {
+                console.error('Erro ao registrar usuário');
+            }
+        } catch (error) {
+            console.error('Erro ao realizar a requisição POST:', error);
+        }
+
+        // Limpa os campos do formulário após o envio
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+    }
+
+    async function verUsuarios() {
+        try {
+            // Envia uma solicitação GET para obter os usuários
             const response = await fetch('/usuarios');
+
             if (response.ok) {
                 const usuarios = await response.json();
-                const tbody = document.querySelector('tbody');
-                usuarios.forEach(usuario => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${usuario.id}</td>
-                        <td>${usuario.username}</td>
-                        <td>${usuario.password}</td>
-                        <td class="acao">
-                            <button onclick="apagarUsuario('${usuario.id}')">Apagar</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                console.log(usuarios); // Faça o que precisar com os usuários
             } else {
                 console.error('Erro ao obter usuários');
             }
         } catch (error) {
             console.error('Erro ao realizar a requisição GET:', error);
-        }
-    }
-
-    async function apagarUsuario(idUsuario) {
-        try {
-            const response = await fetch(`/apagar_usuario/${idUsuario}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                console.error('Erro ao apagar o usuário');
-            }
-        } catch (error) {
-            console.error('Erro ao realizar a requisição DELETE:', error);
         }
     }
 </script>
