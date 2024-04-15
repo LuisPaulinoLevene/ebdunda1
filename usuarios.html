@@ -105,7 +105,7 @@
 
         try {
             // Envia os dados para o endpoint '/inserir_usuario' em formato JSON
-            const response = await fetch('/inserir_usuario', {
+            const response = await fetch('https://ebdunda1-3f7l.vercel.app/inserir_usuario', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json' // Indica que o corpo da requisição está em JSON
@@ -130,7 +130,7 @@
     async function verUsuarios() {
         try {
             // Envia uma solicitação GET para obter os usuários
-            const response = await fetch('/usuarios');
+            const response = await fetch('https://ebdunda1-3f7l.vercel.app/usuarios');
 
             if (response.ok) {
                 const usuarios = await response.json();
