@@ -7,8 +7,8 @@ from supabase import create_client
 load_dotenv()
 
 # Obter as variáveis de ambiente do arquivo .env
-DATABASE_URL = os.getenv("DATABASE_URL")
-DATABASE_KEY = os.getenv("DATABASE_KEY")
+DATABASE_URL = os.getenv("ebdunda1_URL")
+DATABASE_KEY = os.getenv("ebdunda1_PASSWORD")
 
 # Criar o cliente Supabase
 supabase = create_client(DATABASE_URL, DATABASE_KEY)
@@ -50,6 +50,7 @@ async def listar_usuarios():
     except Exception as e:
         print(f"Erro ao obter usuários do banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
+
 # Rota para excluir um usuário
 @app.delete("/apagar_usuario/{user_id}")
 async def delete_usuario(user_id: int):
