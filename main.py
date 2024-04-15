@@ -1,37 +1,44 @@
 from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, FileResponse
+import asyncpg
 from dotenv import load_dotenv
 import os
-from supabase import create_client
 
 load_dotenv()
 
 # Obter as variáveis de ambiente do arquivo .env
 DATABASE_URL = os.getenv("ebdunda1_URL")
-DATABASE_KEY = os.getenv("ebdunda1_PASSWORD")
-
-# Criar o cliente Supabase
-supabase = create_client(DATABASE_URL, DATABASE_KEY)
+DATABASE_USER = os.getenv("ebdunda1_USER")
+DATABASE_PASSWORD = os.getenv("ebdunda1_PASSWORD")
+DATABASE_HOST = os.getenv("ebdunda1_HOST")
+DATABASE_NAME = os.getenv("ebdunda1_DATABASE")
 
 app = FastAPI()
 
+# Função para conectar ao banco de dados PostgreSQL
+async def connect_to_db():
+    return await asyncpg.connect(
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        host=DATABASE_HOST,
+        database=DATABASE_NAME
+    )
+
 # Rota para registrar um usuário
 @app.post("/inserir_usuario")
-async def inserir_usuario(some_column: str = Form(...), other_column: str = Form(...)):
+async def inserir_usuario(username: str = Form(...), password: str = Form(...)):
     try:
-        # Inserir novo usuário na tabela 'usuarios' do banco de dados Supabase
-        response = await supabase.from_("usuarios").insert([
-            {"some_column": some_column, "other_column": other_column}
-        ]).execute()
+        # Conectar ao banco de dados
+        conn = await connect_to_db()
 
-        # Verificar se houve algum erro na inserção
-        if response.error:
-            raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
+        # Inserir novo usuário na tabela 'usuarios' do banco de dados PostgreSQL
+        query = "INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id;"
+        user_id = await conn.fetchval(query, username, password)
 
-        # Selecionar e retornar os dados inseridos
-        inserted_data = await supabase.from_("usuarios").select("*").execute()
-        return JSONResponse(content=inserted_data.data)
+        # Fechar a conexão com o banco de dados
+        await conn.close()
 
+        return JSONResponse(content={"user_id": user_id})
     except Exception as e:
         print(f"Erro ao inserir usuário no banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
@@ -40,29 +47,20 @@ async def inserir_usuario(some_column: str = Form(...), other_column: str = Form
 @app.get("/usuarios")
 async def listar_usuarios():
     try:
-        # Consultar os usuários no banco de dados Supabase
-        response = await supabase.from_("usuarios").select("*").execute()
-        if response.error:
-            raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
+        # Conectar ao banco de dados
+        conn = await connect_to_db()
 
-        # Retornar os usuários como uma resposta JSON
-        return JSONResponse(content=response.data)
+        # Consultar os usuários na tabela 'usuarios' do banco de dados PostgreSQL
+        query = "SELECT * FROM usuarios;"
+        usuarios = await conn.fetch(query)
+
+        # Fechar a conexão com o banco de dados
+        await conn.close()
+
+        return JSONResponse(content=usuarios)
     except Exception as e:
         print(f"Erro ao obter usuários do banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
-
-# Rota para excluir um usuário
-@app.delete("/apagar_usuario/{user_id}")
-async def delete_usuario(user_id: int):
-    try:
-        # Excluir usuário do banco de dados Supabase
-        data = await supabase.table("usuarios").delete().eq("id", user_id)
-        if data["error"]:
-            raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
-    except Exception as e:
-        print(f"Erro ao excluir o usuário: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro ao excluir o usuário. Por favor, tente novamente.")
-    return RedirectResponse("/usuarios.html")
 
 # Rota para a página inicial
 @app.get("/", response_class=FileResponse)
