@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 import asyncpg
 from dotenv import load_dotenv
 import os
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -40,23 +41,34 @@ async def read_utilizadores():
     return HTMLResponse(content=html_content, status_code=200)
 
 # Rota para registrar um usuário
+class UserIn(BaseModel):
+    username: str
+    password: str
+
 @app.post("/inserir_usuario")
-async def inserir_usuario(username: str = Form(...), password: str = Form(...)):
+async def inserir_usuario(user_data: UserIn):
     try:
         # Conectar ao banco de dados
         conn = await connect_to_db()
 
         # Inserir novo usuário na tabela 'usuarios' do banco de dados PostgreSQL
-        query = "INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id;"
-        user_id = await conn.fetchval(query, username, password)
+        query = "INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id, username, password;"
+        result = await conn.fetchrow(query, user_data.username, user_data.password)
 
         # Fechar a conexão com o banco de dados
         await conn.close()
 
-        return {"user_id": user_id}
+        # Extrair o ID, username e password do resultado
+        user_id = result['id']
+        user_username = result['username']
+        user_password = result['password']
+
+        # Retornar os dados do usuário inserido
+        return {"id": user_id, "username": user_username, "password": user_password}
     except Exception as e:
         print(f"Erro ao inserir usuário no banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
+
 
 # Rota para listar os usuários cadastrados em formato JSON
 @app.get("/usuarios", response_class=HTMLResponse)
