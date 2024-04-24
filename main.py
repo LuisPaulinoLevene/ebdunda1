@@ -1,8 +1,12 @@
-from fastapi import FastAPI, Form, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from http.client import HTTPException
+
+from fastapi import FastAPI, Form
+from fastapi.responses import JSONResponse
 import asyncpg
 from dotenv import load_dotenv
 import os
+from pathlib import Path
+from starlette.responses import FileResponse, HTMLResponse
 
 load_dotenv()
 
@@ -24,6 +28,15 @@ async def connect_to_db():
         database=DATABASE_NAME
     )
 
+
+@app.get("/utilizadores.html", response_class=HTMLResponse)
+async def read_utilizadores():
+    file_path = Path("templates") / "utilizadores.html"
+    with open(file_path, "r") as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content, status_code=200)
+
+
 # Rota para registrar um usuário
 @app.post("/inserir_usuario")
 async def inserir_usuario(username: str = Form(...), password: str = Form(...)):
@@ -38,13 +51,13 @@ async def inserir_usuario(username: str = Form(...), password: str = Form(...)):
         # Fechar a conexão com o banco de dados
         await conn.close()
 
-        return JSONResponse(content={"user_id": user_id})
+        return {"user_id": user_id}
     except Exception as e:
         print(f"Erro ao inserir usuário no banco de dados: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
+        raise FastAPI(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
 
-# Rota para listar os usuários cadastrados
-@app.get("/usuarios")
+# Rota para listar os usuários cadastrados em formato JSON
+@app.get("/usuarios", response_class=HTMLResponse)
 async def listar_usuarios():
     try:
         # Conectar ao banco de dados
@@ -57,12 +70,21 @@ async def listar_usuarios():
         # Fechar a conexão com o banco de dados
         await conn.close()
 
-        return JSONResponse(content=usuarios)
+        # Gerar a tabela HTML com os dados dos usuários
+        table_html = "<table border='1'><thead><tr><th>ID</th><th>Username</th><th>Password</th></tr></thead><tbody>"
+        for usuario in usuarios:
+            table_html += f"<tr><td>{usuario['id']}</td><td>{usuario['username']}</td><td>{usuario['password']}</td></tr>"
+        table_html += "</tbody></table>"
+
+        # Retornar a tabela HTML com os dados dos usuários
+        return table_html
     except Exception as e:
         print(f"Erro ao obter usuários do banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
 
+
 # Rota para a página inicial
 @app.get("/", response_class=FileResponse)
 async def read_home():
-    return FileResponse("index.html")
+    file_path = Path("templates") / "index.html"
+    return FileResponse(file_path, media_type="text/html")
