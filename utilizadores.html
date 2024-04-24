@@ -56,7 +56,7 @@
             border-radius: 5px;
         }
 
-        button[type="submit"] {
+        button[type="button"] {
             background-color: #333;
             color: white;
             border: none;
@@ -67,7 +67,7 @@
             box-sizing: border-box;
         }
 
-        button[type="submit"]:hover {
+        button[type="button"]:hover {
             background-color: #555;
         }
     </style>
@@ -80,28 +80,21 @@
 
 <h2>Formulário de Registro</h2>
 
-<form id="registrationForm" onsubmit="registrarUsuario(event)">
+<form id="registrationForm">
     <label for="username">Nome de Usuário:</label>
     <input type="text" id="username" name="username" required>
 
     <label for="password">Senha:</label>
     <input type="password" id="password" name="password" required>
 
-    <button type="submit">Registrar</button>
+    <button type="button" onclick="registrarUsuario()">Registrar</button>
 </form>
 
 <script>
-    async function registrarUsuario(event) {
-        event.preventDefault(); // Evita o envio do formulário por padrão
-
+    async function registrarUsuario() {
         // Obtém os dados do formulário
-        const formData = new FormData(document.getElementById("registrationForm"));
-
-        // Converte os dados do formulário para um objeto JSON
-        const jsonData = {};
-        formData.forEach((value, key) => {
-            jsonData[key] = value;
-        });
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
 
         try {
             // Envia os dados para o endpoint '/inserir_usuario' em formato JSON
@@ -110,21 +103,18 @@
                 headers: {
                     'Content-Type': 'application/json' // Indica que o corpo da requisição está em JSON
                 },
-                body: JSON.stringify(jsonData) // Converte o objeto JSON em uma string JSON
+                body: JSON.stringify({username, password}) // Converte os dados para JSON
             });
 
             if (response.ok) {
-                window.location.href = "/usuarios.html"; // Redireciona após o registro bem-sucedido
+                console.log('Usuário registrado com sucesso');
+                // Não limpa os campos do formulário após o envio bem-sucedido
             } else {
                 console.error('Erro ao registrar usuário');
             }
         } catch (error) {
             console.error('Erro ao realizar a requisição POST:', error);
         }
-
-        // Limpa os campos do formulário após o envio
-        document.getElementById("username").value = "";
-        document.getElementById("password").value = "";
     }
 
     function verUsuarios() {
