@@ -1,12 +1,9 @@
 from http.client import HTTPException
-
 from fastapi import FastAPI, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 import asyncpg
 from dotenv import load_dotenv
 import os
-from pathlib import Path
-from starlette.responses import FileResponse, HTMLResponse
 
 load_dotenv()
 
@@ -28,14 +25,19 @@ async def connect_to_db():
         database=DATABASE_NAME
     )
 
+# Rota para a página inicial
+@app.get("/", response_class=FileResponse)
+async def read_home():
+    file_path = "index.html"
+    return FileResponse(file_path, media_type="text/html")
 
+# Rota para o arquivo utilizadores.html
 @app.get("/utilizadores.html", response_class=HTMLResponse)
 async def read_utilizadores():
-    file_path = Path("templates") / "utilizadores.html"
+    file_path = "utilizadores.html"
     with open(file_path, "r") as file:
         html_content = file.read()
     return HTMLResponse(content=html_content, status_code=200)
-
 
 # Rota para registrar um usuário
 @app.post("/inserir_usuario")
@@ -54,7 +56,7 @@ async def inserir_usuario(username: str = Form(...), password: str = Form(...)):
         return {"user_id": user_id}
     except Exception as e:
         print(f"Erro ao inserir usuário no banco de dados: {str(e)}")
-        raise FastAPI(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
+        raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
 
 # Rota para listar os usuários cadastrados em formato JSON
 @app.get("/usuarios", response_class=HTMLResponse)
@@ -77,14 +79,7 @@ async def listar_usuarios():
         table_html += "</tbody></table>"
 
         # Retornar a tabela HTML com os dados dos usuários
-        return table_html
+        return HTMLResponse(content=table_html, status_code=200)
     except Exception as e:
         print(f"Erro ao obter usuários do banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao obter usuários do banco de dados.")
-
-
-# Rota para a página inicial
-@app.get("/", response_class=FileResponse)
-async def read_home():
-    file_path = Path("templates") / "index.html"
-    return FileResponse(file_path, media_type="text/html")
