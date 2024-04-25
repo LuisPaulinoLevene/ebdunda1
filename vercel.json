@@ -1,1 +1,5 @@
-{"rewrite": [{"source":"/(.*)","destination": "/"}]}
+{
+  "rewrites": [
+    { "source": "/usuarios", "destination": "/usuarios.html" }
+  ]
+}
