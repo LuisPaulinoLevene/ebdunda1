@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/usuarios", "destination": "/usuarios.html" }
+    { "source": "/usuarios", "destination": "/usuarios.html" },
+    { "source": "/inserir_usuario", "destination": "/utilizadores.html" }
   ]
 }
