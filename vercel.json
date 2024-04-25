@@ -1,18 +1,1 @@
-{
-  "name": "EB_Dunda",
-  "version": "1.0.0",
-  "main": "main.py",
-  "scripts": {
-    "start": "uvicorn main:app --host 0.0.0.0 --port $PORT"
-  },
-  "dependencies": {
-    "uvicorn": "^0.15.0",
-    "fastapi": "^0.68.0"
-  },
-  "functions": {
-    "api": {
-      "handler": "main.app",
-      "memory": 1024
-    }
-  }
-}
+{"rewrites": [{"source":"/(.*)","destinatio": "/"}]}
