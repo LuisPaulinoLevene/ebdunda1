@@ -1,10 +1,10 @@
-from http.client import HTTPException
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
-import asyncpg
-from dotenv import load_dotenv
-import os
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import asyncpg
+import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -16,6 +16,22 @@ DATABASE_HOST = os.getenv("ebdunda1_HOST")
 DATABASE_NAME = os.getenv("ebdunda1_DATABASE")
 
 app = FastAPI()
+
+# Configurações do CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "https://maquina.netlify.app"  # Substitua pelo domínio real do seu frontend na Vercel
+]
+
+# Adicionar middleware CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 
 # Função para conectar ao banco de dados PostgreSQL
 async def connect_to_db():
@@ -68,7 +84,6 @@ async def inserir_usuario(user_data: UserIn):
     except Exception as e:
         print(f"Erro ao inserir usuário no banco de dados: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao inserir usuário no banco de dados.")
-
 
 # Rota para listar os usuários cadastrados em formato JSON
 @app.get("/usuarios", response_class=HTMLResponse)
